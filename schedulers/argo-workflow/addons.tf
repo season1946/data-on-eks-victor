@@ -14,7 +14,7 @@ module "eks_blueprints_kubernetes_addons" {
   enable_amazon_eks_coredns            = true
   enable_amazon_eks_kube_proxy         = true
   enable_amazon_eks_aws_ebs_csi_driver = true
-
+  
   #---------------------------------------------------------------
   # CoreDNS Autoscaler helps to scale for large EKS Clusters
   #   Further tuning for CoreDNS is to leverage NodeLocal DNSCache -> https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/
@@ -32,7 +32,11 @@ module "eks_blueprints_kubernetes_addons" {
   #---------------------------------------------------------------
   enable_cluster_autoscaler = true
 
-
+  #---------------------------------------------------------------
+  # aws_load_balancer_controller
+  #---------------------------------------------------------------
+  enable_aws_load_balancer_controller = true
+  
   #---------------------------------------------------------------
   # Spark Operator Add-on
   #---------------------------------------------------------------
@@ -104,3 +108,59 @@ module "helm_addon" {
   ]
 
 }
+
+
+#-------------------------------------------------
+# Argo Events Helm Add-on
+#-------------------------------------------------
+# locals {
+  
+#   argoevents_helm_values = [templatefile("${path.module}/argo-events/values.yaml", {})]
+  
+#   argoevents_helm_config = {
+#     name             = "argo-events"
+#     chart            = "argo-events"
+#     repository       = "https://argoproj.github.io/argo-helm"
+#     version          = "v2.0.6"
+#     namespace        = "argo-events"
+#     create_namespace = true
+#     description      = "Argo events Helm chart deployment configuration"
+#     values           = local.argoevents_helm_values
+#   }
+
+
+
+#   argoevents_irsa_config = {
+#     kubernetes_namespace              = local.argoevents_helm_config["namespace"]
+#     kubernetes_service_account        = local.argoevents_helm_config["name"]
+#     create_kubernetes_namespace       = try(local.argoevents_helm_config["create_namespace"], true)
+#     create_kubernetes_service_account = false
+#     irsa_iam_policies                 = []
+#   }
+
+# }
+
+# module "argoevents_helm_addon" {
+#   source      = "github.com/aws-ia/terraform-aws-eks-blueprints//modules/kubernetes-addons/helm-addon?ref=v4.12.0"
+#   helm_config = local.argoevents_helm_config
+#   irsa_config = local.argoevents_irsa_config
+
+#   addon_context = {
+#     aws_caller_identity_account_id = data.aws_caller_identity.current.account_id
+#     aws_caller_identity_arn        = data.aws_caller_identity.current.arn
+#     aws_eks_cluster_endpoint       = module.eks_blueprints.eks_cluster_endpoint
+#     aws_partition_id               = data.aws_partition.current.partition
+#     aws_region_name                = data.aws_region.current.name
+#     eks_cluster_id                 = module.eks_blueprints.eks_cluster_id
+#     eks_oidc_issuer_url            = replace(data.aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer, "https://", "")
+#     eks_oidc_provider_arn          = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.eks_oidc_issuer_url}"
+#     tags                           = local.tags
+#     irsa_iam_role_path             = "/"
+#     irsa_iam_permissions_boundary  = ""
+#   }
+
+#   depends_on = [
+#     module.eks_blueprints
+#   ]
+
+# }

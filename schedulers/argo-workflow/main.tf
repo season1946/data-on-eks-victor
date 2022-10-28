@@ -162,3 +162,22 @@ resource "kubernetes_role_binding" "argo-admin-rolebinding" {
     name      = "admin"
   }
 }
+
+#---------------------------------------------------------------
+# IRSA for Arog events 
+#---------------------------------------------------------------
+module "irsa_argo_events" {
+  source = "github.com/aws-ia/terraform-aws-eks-blueprints//modules/irsa?ref=v4.12.2"
+
+  create_kubernetes_namespace = false
+  kubernetes_namespace        = "argo-events"
+  kubernetes_service_account  = "event-sa"
+  irsa_iam_policies           = [data.aws_iam_policy.sqs.arn]
+  eks_cluster_id              = module.eks_blueprints.eks_cluster_id
+  eks_oidc_provider_arn       = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${module.eks_blueprints.oidc_provider}"
+}
+
+data "aws_iam_policy" "sqs" {
+
+  name = "AmazonSQSReadOnlyAccess"
+}
