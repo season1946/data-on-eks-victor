@@ -210,7 +210,7 @@ resource "aws_s3_object" "this" {
 #---------------------------------------------------------------
 module "irsa_spark_s3log" {
   source = "github.com/aws-ia/terraform-aws-eks-blueprints//modules/irsa?ref=v4.15.0"
-
+  create_kubernetes_namespace = false
   eks_cluster_id             = local.name
   eks_oidc_provider_arn      = module.eks_blueprints.eks_oidc_provider_arn
   irsa_iam_policies          = [aws_iam_policy.spark.arn]

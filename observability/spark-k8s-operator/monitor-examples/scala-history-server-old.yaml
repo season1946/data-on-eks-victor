@@ -1,0 +1,32 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: scala-history-server
+  namespace: spark-team-a
+spec:
+  type: Scala
+  mode: cluster
+  image: "seedjeffwan/spark:v2.4.5"
+  imagePullPolicy: Always
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: "local:///opt/spark/examples/jars/spark-examples_2.11-2.4.5.jar"
+  arguments:
+    - "1000"
+  sparkVersion: "2.4.5"
+  restartPolicy:
+    type: Never
+  sparkConf:
+    "spark.hadoop.fs.s3a.aws.credentials.provider": "com.amazonaws.auth.InstanceProfileCredentialsProvider"
+    "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem"
+    "spark.eventLog.enabled": "true"
+    "spark.eventLog.dir": "s3a://spark-34936187025220221107172337871400000001/logs/"
+  driver:
+    cores: 1
+    coreLimit: "1024m"
+    memory: "512m"
+    serviceAccount: spark-team-a
+  executor:
+    cores: 1
+    instances: 2
+    memory: "512m"
+    
