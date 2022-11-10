@@ -15,6 +15,26 @@ module "eks_blueprints_kubernetes_addons" {
   enable_amazon_eks_kube_proxy         = true
   enable_amazon_eks_aws_ebs_csi_driver = true
 
+  # argo cd for gitops
+  enable_argocd = true
+  # argocd_manage_add_ons = true # Indicates that ArgoCD is responsible for managing/deploying add-ons
+  argocd_applications = {
+    # addons = {
+    #   path               = "chart"
+    #   repo_url           = "https://github.com/aws-samples/eks-blueprints-add-ons.git"
+    #   add_on_application = true
+    # }
+    workloads = {
+      path               = "envs/dev"
+      repo_url           = "https://github.com/aws-samples/eks-blueprints-workloads.git"
+      add_on_application = false
+    }
+  }
+  
+  #---------------------------------------------------------------
+  # external secrets operator to read secrets from AWS Secrets Manager, HashiCorp Vault
+  #---------------------------------------------------------------
+  enable_external_secrets = true
   #---------------------------------------------------------------
   # CoreDNS Autoscaler helps to scale for large EKS Clusters
   #   Further tuning for CoreDNS is to leverage NodeLocal DNSCache -> https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/

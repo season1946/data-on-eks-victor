@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aws-cli
+  namespace: YOUR_NAMESPACE
+spec:
+  serviceAccountName: YOUR_SERVICEACCOUNT
+  containers:
+  - name: aws-cli
+    image: amazon/aws-cli:latest
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always
+  
+  # check role attached, kubectl -n YOUR_NAMESPACE exec -it aws-cli -- aws sts get-caller-identity
+  # check s3 list, kubectl -n YOUR_NAMESPACE exec -it aws-cli -- aws s3 ls s3://YOUR_BUCKET
+  # delete, kubectl  -n YOUR_NAMESPACE exec -it aws-cli -- aws s3 rm s3://YOUR_BUCKET/demo-test-file

@@ -91,6 +91,38 @@ module "eks_blueprints" {
       }
     }
   }
+  
+  platform_teams = {
+    admin = {
+      users = [data.aws_caller_identity.current.arn]
+    }
+  }
+  
+  application_teams = {
+    team-red = { # namespace
+      "labels" = {
+        "appName"     = "read-team-app",
+        "projectName" = "project-red",
+        "environment" = "example",
+        "domain"      = "example",
+        "uuid"        = "example",
+        "billingCode" = "example",
+        "branch"      = "example"
+      }
+      "quota" = {
+        "requests.cpu"    = "1000m",
+        "requests.memory" = "4Gi",
+        "limits.cpu"      = "2000m",
+        "limits.memory"   = "8Gi",
+        "pods"            = "10",
+        "secrets"         = "10",
+        "services"        = "10"
+      }
+
+      manifests_dir = "./manifests-team-red"
+      users         = ["arn:aws:iam::349361870252:user/k8s-local"]
+    }
+  }
 
   tags = local.tags
 }

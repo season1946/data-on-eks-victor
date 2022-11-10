@@ -1,6 +1,6 @@
 variable "name" {
   description = "Name of the VPC and EKS Cluster"
-  default     = "argoworkflows-eks"
+  default     = "argoworkflows02-eks"
   type        = string
 }
 
