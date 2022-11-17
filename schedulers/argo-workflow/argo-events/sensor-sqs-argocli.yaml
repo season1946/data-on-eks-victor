@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: aws-sqs-argocli
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+    - name: test-dep
+      eventSourceName: aws-sqs
+      eventName: example
+  triggers:
+    - template:
+        name: sqs-workflow-argocli
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: sqs-argocli-
+                namespace: argo-workflows
+              spec:
+                entrypoint: whalesay
+                volumes:
+                - name: my-secret-vol
+                  secret:
+                    secretName: my-secret     # name of an existing k8s secret
+                arguments:
+                  parameters:
+                  - name: message
+                    # the value will get overridden by event payload from test-dep
+                    value: default
+                templates:
+                - name: whalesay
+                  inputs:
+                    parameters:
+                    - name: message
+                  container:
+                    image: docker/whalesay:latest
+                    command: [cowsay]
+                    args: ["{{inputs.parameters.message}}"]
+                    env:
+                    - name: MYSECRETPASSWORD  # name of env var
+                      valueFrom:
+                          secretKeyRef:
+                            name: my-secret     # name of an existing k8s secret
+                            key: mypassword     # 'key' subcomponent of the secret
+                    volumeMounts:
+                    - name: my-secret-vol     # mount file containing secret at /secret/mountpath
+                      mountPath: "/secret/mountpath"
+          parameters:
+            - src:
+                dependencyName: test-dep
+                dataKey: body
+              dest: spec.arguments.parameters.0.value

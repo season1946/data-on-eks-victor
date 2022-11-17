@@ -1,0 +1,14 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fsx-sc
+provisioner: fsx.csi.aws.com
+parameters:
+  subnetId: subnet-0e7a9f936275798d8
+  securityGroupIds: sg-0642041bf3b7eaf24
+  s3ImportPath: s3://fsx-test-victor          #The Amazon S3 bucket for s3ImportPath and s3ExportPath must be the same
+  s3ExportPath: s3://fsx-test-victor/export
+  deploymentType: SCRATCH_2
+mountOptions:
+  - flock

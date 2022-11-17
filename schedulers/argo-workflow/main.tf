@@ -47,6 +47,22 @@ module "eks_blueprints" {
       type                          = "ingress"
       source_cluster_security_group = true
     }
+    ingress_fsx1 = {
+      description = "Allows Lustre traffic between Lustre clients"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks
+      from_port   = 1021
+      to_port     = 1023
+      protocol    = "tcp"
+      type        = "ingress"
+    }
+    ingress_fsx2 = {
+      description = "Allows Lustre traffic between Lustre clients"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks
+      from_port   = 988
+      to_port     = 988
+      protocol    = "tcp"
+      type        = "ingress"
+    }
   }
 
   managed_node_groups = {

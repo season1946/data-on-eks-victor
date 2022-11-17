@@ -17,13 +17,13 @@ module "eks_blueprints_kubernetes_addons" {
 
   # argo cd for gitops
   enable_argocd = true
-  # argocd_manage_add_ons = true # Indicates that ArgoCD is responsible for managing/deploying add-ons
+  argocd_manage_add_ons = true # Indicates that ArgoCD is responsible for managing/deploying add-ons
   argocd_applications = {
-    # addons = {
-    #   path               = "chart"
-    #   repo_url           = "https://github.com/aws-samples/eks-blueprints-add-ons.git"
-    #   add_on_application = true
-    # }
+    addons = {
+      path               = "chart"
+      repo_url           = "https://github.com/season1946/eks-blueprints-add-ons.git"
+      add_on_application = true
+    }
     workloads = {
       path               = "envs/dev"
       repo_url           = "https://github.com/aws-samples/eks-blueprints-workloads.git"
@@ -31,6 +31,15 @@ module "eks_blueprints_kubernetes_addons" {
     }
   }
   
+  //aws load balancer controller 
+  enable_aws_load_balancer_controller = true
+  
+  #---------------------------------------------------------------
+  # prometheus and grafana
+  #---------------------------------------------------------------
+  enable_prometheus = true
+  enable_grafana = true
+   
   #---------------------------------------------------------------
   # external secrets operator to read secrets from AWS Secrets Manager, HashiCorp Vault
   #---------------------------------------------------------------
@@ -39,7 +48,7 @@ module "eks_blueprints_kubernetes_addons" {
   # CoreDNS Autoscaler helps to scale for large EKS Clusters
   #   Further tuning for CoreDNS is to leverage NodeLocal DNSCache -> https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/
   #---------------------------------------------------------------
-  enable_coredns_autoscaler = true
+ # enable_coredns_autoscaler = true
 
   #---------------------------------------------------------------
   # Metrics Server
@@ -59,7 +68,7 @@ module "eks_blueprints_kubernetes_addons" {
   #---------------------------------------------------------------
   # Apache YuniKorn Add-on
   #---------------------------------------------------------------
-  enable_yunikorn = true
+  #enable_yunikorn = true
   #---------------------------------------------------------------
   # Argo Events Add-on
   #---------------------------------------------------------------
@@ -67,41 +76,54 @@ module "eks_blueprints_kubernetes_addons" {
   #---------------------------------------------------------------
   # Spark History Server Addon
   #---------------------------------------------------------------
-  enable_spark_history_server = true
-  # This example is using a managed s3 readonly policy. It' recommended to create your own IAM Policy
-  spark_history_server_irsa_policies = ["arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonS3ReadOnlyAccess"]
-  spark_history_server_helm_config = {
-    name       = "spark-history-server"
-    chart      = "spark-history-server"
-    repository = "https://hyper-mesh.github.io/spark-history-server"
-    version    = "1.0.0"
-    namespace  = "spark-history-server"
-    timeout    = "300"
-    values = [
-      <<-EOT
-        serviceAccount:
-          create: false
+  # enable_spark_history_server = true
+  # # This example is using a managed s3 readonly policy. It' recommended to create your own IAM Policy
+  # spark_history_server_irsa_policies = ["arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonS3ReadOnlyAccess"]
+  # spark_history_server_helm_config = {
+  #   name       = "spark-history-server"
+  #   chart      = "spark-history-server"
+  #   repository = "https://hyper-mesh.github.io/spark-history-server"
+  #   version    = "1.0.0"
+  #   namespace  = "spark-history-server"
+  #   timeout    = "300"
+  #   values = [
+  #     <<-EOT
+  #       serviceAccount:
+  #         create: false
 
-        sparkHistoryOpts: "-Dspark.history.fs.logDirectory=s3a://${aws_s3_bucket.this.id}/${aws_s3_object.this.key}"
+  #       sparkHistoryOpts: "-Dspark.history.fs.logDirectory=s3a://${aws_s3_bucket.this.id}/${aws_s3_object.this.key}"
 
-        # Update spark conf according to your needs
-        sparkConf: |-
-          spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.WebIdentityTokenCredentialsProvider
-          spark.history.fs.eventLog.rolling.maxFilesToRetain=5
-          spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
-          spark.eventLog.enabled=true
-          spark.history.ui.port=18080
+  #       # Update spark conf according to your needs
+  #       sparkConf: |-
+  #         spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.WebIdentityTokenCredentialsProvider
+  #         spark.history.fs.eventLog.rolling.maxFilesToRetain=5
+  #         spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+  #         spark.eventLog.enabled=true
+  #         spark.history.ui.port=18080
 
-        resources:
-          limits:
-            cpu: 200m
-            memory: 2G
-          requests:
-            cpu: 100m
-            memory: 1G
-        EOT
-    ]
-  }
+  #       resources:
+  #         limits:
+  #           cpu: 200m
+  #           memory: 2G
+  #         requests:
+  #           cpu: 100m
+  #           memory: 1G
+  #       EOT
+  #   ]
+  # }
+  
+  #---------------------------------------
+  # Enable FSx for Lustre CSI Driver
+  #---------------------------------------
+  # enable_aws_fsx_csi_driver = true
+  # aws_fsx_csi_driver_helm_config = {
+  #   name       = "aws-fsx-csi-driver"
+  #   chart      = "aws-fsx-csi-driver"
+  #   repository = "https://kubernetes-sigs.github.io/aws-fsx-csi-driver/"
+  #   version    = "1.4.2"
+  #   namespace  = "kube-system"
+  #   #    values = [templatefile("${path.module}/aws-fsx-csi-driver-values.yaml", {})]
+  # }
 
 }
 
@@ -325,4 +347,29 @@ resource "kubernetes_cluster_role_binding" "spark_s3_role_binding" {
   }
 
   depends_on = [module.irsa_spark_s3log]
+}
+
+#---------------------------------------------------------------
+# Sec group for FSx for Lustre
+#---------------------------------------------------------------
+resource "aws_security_group" "fsx" {
+  name        = "${local.name}-fsx"
+  description = "Allow inbound traffic from private subnets of the VPC to FSx filesystem"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "Allows Lustre traffic between Lustre clients"
+    cidr_blocks = module.vpc.private_subnets_cidr_blocks
+    from_port   = 1021
+    to_port     = 1023
+    protocol    = "tcp"
+  }
+  ingress {
+    description = "Allows Lustre traffic between Lustre clients"
+    cidr_blocks = module.vpc.private_subnets_cidr_blocks
+    from_port   = 988
+    to_port     = 988
+    protocol    = "tcp"
+  }
+  tags = local.tags
 }

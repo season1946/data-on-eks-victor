@@ -12,3 +12,13 @@ output "your_event_irsa_arn" {
   description = "the ARN of IRSA for argo events"
   value       = module.irsa_argo_events.irsa_iam_role_arn
 }
+
+output "fsx_sc_id" {
+  description = "security group id for FSX lustre"
+  value       = aws_security_group.fsx.id
+}
+
+output "private_subnets" {
+  description = "List of IDs of private subnets"
+  value       = module.vpc.private_subnets
+}

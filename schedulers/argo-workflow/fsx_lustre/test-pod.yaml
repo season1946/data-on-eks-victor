@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fsx-app
+  namespace: team-red
+spec:
+  containers:
+  - name: app
+    image: amazonlinux:2
+    command: ["/bin/sh"]
+    securityContext:
+      privileged: true
+    args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
+    lifecycle:
+      postStart:
+        exec:
+          command: ["amazon-linux-extras", "install", "lustre2.10", "-y"] # permission error
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+    resources:
+      requests:
+        memory: '128Mi'
+        cpu: '500m'
+      limits:
+        memory: '128Mi'
+        cpu: '500m'
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: fsx-pvc
+
+      
+      # test kubectl -n team-red exec fsx-app -- ls /data
+      # archive files going to s3  kubectl -n team-red exec -ti fsx-app -- lfs hsm_archive /data/out.txt
+      # or create a  Data repository tasks in FSX UI to export data to S3

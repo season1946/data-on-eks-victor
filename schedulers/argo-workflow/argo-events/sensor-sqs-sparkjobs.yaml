@@ -14,6 +14,11 @@ spec:
     - template:
         name: sqs-spark-workflow
         k8s:
+          parameters: # get parameter from event 
+            - src:
+                dependencyName: test-dep
+                dataKey: body
+              dest: spec.arguments.parameters.0.value
           operation: create
           source:
             resource:
@@ -23,7 +28,10 @@ spec:
                 generateName: aws-sqs-spark-workflow-
                 namespace: argo-workflows
               spec:
-                arguments: {}
+                arguments: 
+                  parameters:
+                  - name: message
+                  value: Message string default value             # the value will get overridden by event payload from test-dep
                 entrypoint: sparkapp-operator
                 templates:
                 - name: sparkapp-operator

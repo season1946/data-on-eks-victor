@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fsx-pvc
+  namespace: team-red
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: fsx-sc
+  resources:
+    requests:
+      storage: 120Gi
+
+# after apply ,The STATUS may show as Pending for 5-10 minutes, before changing to Bound. Don’t continue with the next step until the STATUS is Bound
