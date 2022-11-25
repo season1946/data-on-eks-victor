@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: dag-callapi-
+spec:
+  entrypoint: callapi
+  templates:
+  - name: curl
+    inputs:
+      parameters:
+      - name: message
+    container:
+      image: curlimages/curl
+      command: [curl, "https://sandbox.api.service.nhs.uk/hello-world/hello/world"]
+  - name: callapi
+    dag:
+      tasks:
+      - name: A
+        template: curl
+      - name: B
+        dependencies: [A]
+        template: curl
+
+

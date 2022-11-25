@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: from-async-template-
+spec:
+  entrypoint: whalesay
+  arguments:
+    parameters:
+      - name: job-cmd
+        value: curl https://sandbox.api.service.nhs.uk/hello-world/hello/world
+  templates:
+    - name: whalesay
+      steps:
+        - - name: hello-world
+            templateRef:
+              name: external-job-template
+              template: run-external-job

@@ -1,0 +1,39 @@
+# https://argoproj.github.io/argo-workflows/async-pattern/
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: external-job-template
+spec:
+  templates:
+  - name: run-external-job
+    inputs:
+      parameters:
+        - name: "job-cmd"
+    steps:
+      - - name: trigger-job
+          template: trigger-job
+          arguments:
+            parameters:
+              - name: "job-cmd"
+                value: "{{inputs.parameters.job-cmd}}"
+      - - name: wait-completion
+          template: wait-completion
+          arguments:
+            parameters:
+              - name: uuid
+                value: "{{steps.trigger-job.outputs.result}}"
+
+  - name: trigger-job
+    inputs:
+      parameters:
+        - name: "job-cmd"
+          value: "{{inputs.parameters.job-cmd}}"
+      image: appropriate/curl:latest
+      command: ["/bin/sh", "-c"]
+      args: ["{{inputs.parameters.cmd}}"]
+
+  - name: wait-completion
+    inputs:
+      parameters:
+        - name: uuid
+    suspend: {}
