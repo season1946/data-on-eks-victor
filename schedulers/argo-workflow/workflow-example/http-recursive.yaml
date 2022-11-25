@@ -1,5 +1,5 @@
-#In this example, the 'apicall' step is recursively repeated until
-# the result is 200
+#In this example, the 'check-status' step is recursively repeated until
+# the result is finished
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
