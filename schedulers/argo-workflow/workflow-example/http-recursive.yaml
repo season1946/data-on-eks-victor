@@ -31,10 +31,10 @@ spec:
         template: wait
     - - name: finished
         template: finished # api returns finished then exist
-        when: "{{steps.start-call.outputs.result}} == finished"
+        when: "{{steps.call-jobstatus-api.outputs.result}} == finished"
       - name: processing
         template: check-status # go back if returns processing
-        when: "{{steps.start-call.outputs.result}} == processing"
+        when: "{{steps.call-jobstatus-api.outputs.result}} == processing"
 
   - name: call-api
     inputs:
@@ -47,7 +47,7 @@ spec:
     container:
       image: registry-vpc.cn-beijing.aliyuncs.com/galixir/whalesay:latest
       command: [sh, -c]
-      args: ["echo \"it was heads\""]
+      args: ["echo \"it is done\""]
   - name: wait
     suspend:
       duration: "20"    # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
