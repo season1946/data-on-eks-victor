@@ -23,18 +23,16 @@ spec:
     parameters:
       - name: url
     steps:
-    - - name: call-jobstatus-api
-        template: call-api # call job status api
-        arguments:
-          parameters: [{name: url, value: "{{inputs.parameters.url}}"}]
     - - name: wait 
         template: wait
-    - - name: finished
-        template: finished # api returns finished then exist
-        when: "{{steps.call-jobstatus-api.outputs.result}} == finished"
+     #  call-status returns true if processing is done  
+    - - name: call-jobstatus-api
+        template: call-status # call job status api
+        arguments:
+          parameters: [{name: url, value: "{{inputs.parameters.url}}"}]
       - name: processing
         template: check-status # go back if returns processing
-        when: "{{steps.call-jobstatus-api.outputs.result}} == processing"
+
 
   - name: call-api
     inputs:
@@ -43,15 +41,16 @@ spec:
     http:
       successCondition: "response.statusCode == 201" # Succeed only if status is 201, otherwise fail
       url: "{{inputs.parameters.url}}"
-  - name: finished
-    container:
-      image: registry-vpc.cn-beijing.aliyuncs.com/galixir/whalesay:latest
-      command: [sh, -c]
-      args: ["echo \"it is done\""]
   - name: wait
     suspend:
       duration: "20"    # Must be a string. Default unit is seconds. Could also be a Duration, e.g.: "2m", "6h", "1d"
-
+  - name: call-status
+    inputs:
+      parameters:
+        - name: url
+    http:
+      successCondition: "response.body contains \"done\""
+      url: "{{inputs.parameters.url}}"
 
 
      # http output https://github.com/argoproj/argo-workflows/discussions/7376
