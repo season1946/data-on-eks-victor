@@ -1,6 +1,8 @@
 #---------------------------------------------------------------
 # EKS Blueprints
 #---------------------------------------------------------------
+
+# just create a cluster. add-on and emr-on-eks module will be called in a seperate repo 
 module "eks_blueprints" {
   source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.15.0"
 
@@ -18,14 +20,17 @@ module "eks_blueprints" {
       rolearn  = module.mwaa.mwaa_role_arn
       username = "mwaa-service"
       groups   = ["system:masters"]
+    },
+    {
+      rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/AWSServiceRoleForAmazonEMRContainers"
+      username = "emr-containers"
+      groups   = []
     }
   ]
 
+
   managed_node_groups = {
-    # EKS MANAGED NODE GROUPS
-    # We recommend to have a MNG to place your critical workloads and add-ons
-    # Then rely on Karpenter to scale your workloads
-    # You can also make uses on nodeSelector and Taints/tolerations to spread workloads on MNG or Karpenter provisioners
+    # Core node group for deploying all the critical add-ons
     mng1 = {
       node_group_name = "core-node-grp"
       subnet_ids      = module.vpc.private_subnets
@@ -65,77 +70,71 @@ module "eks_blueprints" {
         "k8s.io/cluster-autoscaler/enabled"                              = "true"
       }
     },
-  }
+    #---------------------------------------
+    # Note: This example only uses ON_DEMAND node group for both Spark Driver and Executors.
+    #   If you want to leverage SPOT nodes for Spark executors then create ON_DEMAND node group for placing your driver pods and SPOT nodegroup for executors.
+    #   Use NodeSelectors to place your driver/executor pods with the help of Pod Templates.
+    #---------------------------------------
+    mng2 = {
+      node_group_name = "spark-node-grp"
+      subnet_ids      = module.vpc.private_subnets
+      instance_types  = ["r5d.large"]
+      ami_type        = "AL2_x86_64"
+      capacity_type   = "ON_DEMAND"
 
-  #---------------------------------------
-  # ENABLE EMR ON EKS
-  # 1. Creates namespace
-  # 2. k8s role and role binding(emr-containers user) for the above namespace
-  # 3. IAM role for the team execution role
-  # 4. Update AWS_AUTH config map with  emr-containers user and AWSServiceRoleForAmazonEMRContainers role
-  # 5. Create a trust relationship between the job execution role and the identity of the EMR managed service account
-  #---------------------------------------
-  enable_emr_on_eks = true
-  emr_on_eks_teams = {
-    emr-mwaa-team = {
-      namespace               = "emr-mwaa"
-      job_execution_role      = "emr-eks-mwaa-team"
-      additional_iam_policies = [aws_iam_policy.emr_on_eks.arn]
-    }
-  }
+      format_mount_nvme_disk = true # Mounts NVMe disks to /local1, /local2 etc. for multiple NVMe disks
 
-  tags = local.tags
-}
+      # RAID0 configuration is recommended for better performance when you use larger instances with multiple NVMe disks e.g., r5d.24xlarge
+      # Permissions for hadoop user runs the spark job. user > hadoop:x:999:1000::/home/hadoop:/bin/bash
+      post_userdata = <<-EOT
+        #!/bin/bash
+        set -ex
+        /usr/bin/chown -hR +999:+1000 /local1
+      EOT
 
-#------------------------------------------------------------------------
-# Kubernetes Add-on Module
-#------------------------------------------------------------------------
-module "eks_blueprints_kubernetes_addons" {
-  source = "github.com/aws-ia/terraform-aws-eks-blueprints//modules/kubernetes-addons?ref=v4.15.0"
+      disk_size = 100
+      disk_type = "gp3"
 
-  eks_cluster_id       = module.eks_blueprints.eks_cluster_id
-  eks_cluster_endpoint = module.eks_blueprints.eks_cluster_endpoint
-  eks_oidc_provider    = module.eks_blueprints.oidc_provider
-  eks_cluster_version  = module.eks_blueprints.eks_cluster_version
+      max_size     = 9 # Managed node group soft limit is 450; request AWS for limit increase
+      min_size     = 3
+      desired_size = 3
 
-  # EKS Managed Add-ons
-  enable_amazon_eks_vpc_cni            = true
-  enable_amazon_eks_coredns            = true
-  enable_amazon_eks_kube_proxy         = true
-  enable_amazon_eks_aws_ebs_csi_driver = true
+      create_launch_template = true
+      launch_template_os     = "amazonlinux2eks"
 
-  enable_metrics_server     = true
-  enable_cluster_autoscaler = true
+      update_config = [{
+        max_unavailable_percentage = 50
+      }]
 
-  tags = local.tags
-}
-#---------------------------------------------------------------
-# Example IAM policies for EMR job execution
-#---------------------------------------------------------------
-resource "aws_iam_policy" "emr_on_eks" {
-  name        = format("%s-%s", local.name, "emr-job-iam-policies")
-  description = "IAM policy for EMR on EKS Job execution"
-  path        = "/"
-  policy      = data.aws_iam_policy_document.emr_on_eks.json
-}
+      additional_iam_policies = []
+      k8s_taints              = []
 
-#---------------------------------------------------------------
-# Create EMR on EKS Virtual Cluster
-#---------------------------------------------------------------
-resource "aws_emrcontainers_virtual_cluster" "this" {
-  name = format("%s-%s", module.eks_blueprints.eks_cluster_id, "emr-mwaa-team")
-
-  container_provider {
-    id   = module.eks_blueprints.eks_cluster_id
-    type = "EKS"
-
-    info {
-      eks_info {
-        namespace = "emr-mwaa"
+      k8s_labels = {
+        Environment   = "preprod"
+        Zone          = "test"
+        WorkerType    = "ON_DEMAND"
+        NodeGroupType = "spark"
       }
-    }
+
+      additional_tags = {
+        Name                                                             = "spark-node-grp"
+        subnet_type                                                      = "private"
+        "k8s.io/cluster-autoscaler/node-template/label/arch"             = "x86"
+        "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/os" = "linux"
+        "k8s.io/cluster-autoscaler/node-template/label/noderole"         = "spark"
+        "k8s.io/cluster-autoscaler/node-template/label/disk"             = "nvme"
+        "k8s.io/cluster-autoscaler/node-template/label/node-lifecycle"   = "on-demand"
+        "k8s.io/cluster-autoscaler/experiments"                          = "owned"
+        "k8s.io/cluster-autoscaler/enabled"                              = "true"
+      }
+    },
   }
+
+
+  tags = local.tags
 }
+
+
 #------------------------------------------------------------------------
 # Create K8s Namespace and Role for mwaa access directly
 #------------------------------------------------------------------------
