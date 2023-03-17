@@ -138,6 +138,7 @@ module "eks_ack_addons" {
   ecrpublic_token    = data.aws_ecrpublic_authorization_token.token.password
 
   enable_emrcontainers = true
-
+  enable_sfn = true
+  
   tags = local.tags
 }

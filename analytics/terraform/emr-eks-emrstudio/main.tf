@@ -2,8 +2,8 @@
 # EKS Blueprints
 #---------------------------------------------------------------
 module "eks_blueprints" {
-  //source = "../../../../terraform-aws-eks-blueprints"
-  source          = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.18.1"
+  source = "../../../../terraform-aws-eks-blueprints"
+  //source          = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.18.1"
   cluster_name    = local.name
   cluster_version = var.eks_cluster_version
 
@@ -100,9 +100,9 @@ module "eks_blueprints" {
     mng2 = {
       node_group_name = "spark-node-grp"
       subnet_ids      = [module.vpc.private_subnets[0]]
-      instance_types  = ["r5d.large"]
+      instance_types  = ["r5d.4xlarge"]
       ami_type        = "AL2_x86_64"
-      capacity_type   = "ON_DEMAND"
+      capacity_type   = "SPOT"
 
       # Enable this option only when you are using NVMe disks
       format_mount_nvme_disk = true # Mounts NVMe disks to /local1, /local2 etc. for multiple NVMe disks
@@ -112,6 +112,8 @@ module "eks_blueprints" {
       post_userdata = <<-EOT
         #!/bin/bash
         set -ex
+        mkdir local1
+        mkdir local2
         /usr/bin/chown -hR +999:+1000 /local*
       EOT
 
@@ -119,8 +121,8 @@ module "eks_blueprints" {
       disk_type = "gp3"
 
       max_size     = 9 # Managed node group soft limit is 450; request AWS for limit increase
-      min_size     = 1
-      desired_size = 1
+      min_size     = 3
+      desired_size = 3
 
       create_launch_template = true
       launch_template_os     = "amazonlinux2eks"
