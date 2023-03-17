@@ -1,0 +1,26 @@
+"apiVersion": "v1"
+"clusters":
+- "cluster":
+    "certificate-authority-data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvakNDQWVhZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJeU1URXdOekUzTXpFek4xb1hEVE15TVRFd05ERTNNekV6TjFvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBS01jClBIUjBHdVl4OTBteTBkTmZoUWVCUzB3NDBTLzF3N0NWdEJOWkxDdXZFM0NjcVFjRnpCd0xibnpyZHJUSGhNVTkKNDhFSm1hcEYyWm1Jd2taV2FoQVVpY0QrK3dKbi93QzhXRzE0OERxVzZ0dUhiUmJlQkRybTBvakwwRFNxZHE0bQpobUhhQ0s2Smt1M3dmQ1BzZjgrVmJDRGNxdmR0ZFhxS2c1eVEwMVFhVTh1enJYc1FmdS9ZbGFNajRSTktZVFVjCnVtT3lkREVGdWMxbEpnQlVtZnRSTlUvRlEraHorN3NKN3RiRGNJSktWa3RsNVlPbFN0eGVoMzF0ODRPNk5CT2YKYm1PY1lDWFJxZUtFcHlOcDBLdUF3S3RnZDJxOUtkZ2VQSUNOUVBIN0hVYWNIT1A5bWdpUGlGaWd0eGdJeU85Sgozb05XajZ3OVRRdkZOSHZHYVNNQ0F3RUFBYU5aTUZjd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZOUWVxY0p2cmRNNTJGaWlaUWhPWVlrampzeFZNQlVHQTFVZEVRUU8KTUF5Q0NtdDFZbVZ5Ym1WMFpYTXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBRWVSK1RWNzJHMDZ2OTR5ZzhiegpMc1ZQS3YvZ1lUUmIrS2tUaE5JR2tMTVdrUnNOSFZCR3JOTklrL3NtNVl6cG9WTkh5aTJlK1dMRkk5REkvWXB0Ci9oQUFFTXMzVHdzSzhwZlRGb08zdjNKSVYrcVgveURsNFhucWdHbkJ3QWdyVWV2cnppVTFXMzhYRGRSeUY2b24KNlc2MDA3cTJDTGdyMm9EUHRqYWV0RFRUQ21KNzhzd2R2WFNobm04YTRHbVUrRzREVXkxdUN0WHNkRnZ0UkVBcgpRdUhQank3MFlUdnhkbUMxaURidnZzdVRRMnNjWWxmSk1jZ3N2NWY4ZklUV1NsdWxMZ2RRTTlJaWYyRVlETEhDCkcrTFo2c0tJY21RVUUrUHdtclU0d3M4NzdjQjdKZE1hUlN6blpXbkJvdVdjMFk4UFNNWUs1Q0pxM05ZSVU5U2EKNExzPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+    "server": "https://62021BE274D5057D49FE8494441EA0F0.gr7.us-west-2.eks.amazonaws.com"
+  "name": "arn:aws:eks:us-west-2:349361870252:cluster/spark-k8s-monitor"
+"contexts":
+- "context":
+    "cluster": "arn:aws:eks:us-west-2:349361870252:cluster/spark-k8s-monitor"
+    "user": "mwaa"
+  "name": "mwaa"
+"current-context": "mwaa"
+"kind": "Config"
+"users":
+- "name": "mwaa"
+  "user":
+    "exec":
+      "apiVersion": "client.authentication.k8s.io/v1beta1"
+      "args":
+      - "--region"
+      - "us-west-2"
+      - "eks"
+      - "get-token"
+      - "--cluster-name"
+      - "spark-k8s-monitor"
+      "command": "aws"

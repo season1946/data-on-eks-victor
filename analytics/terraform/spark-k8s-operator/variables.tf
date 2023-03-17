@@ -1,6 +1,6 @@
 variable "name" {
   description = "Name of the VPC and EKS Cluster"
-  default     = "spark-k8s-operator"
+  default     = "spark-k8s-monitor"
   type        = string
 }
 
@@ -12,7 +12,7 @@ variable "region" {
 
 variable "eks_cluster_version" {
   description = "EKS Cluster version"
-  default     = "1.24"
+  default     = "1.23"
   type        = string
 }
 
