@@ -1,0 +1,66 @@
+# check if you have eks.privileged psp
+#  k get psp
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+ name: privileged-role
+rules:
+  - apiGroups:
+      - extensions
+    resourceNames:
+      - eks.privileged
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - use
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: privileged-rolebinding
+ namespace: kube-system
+roleRef:
+ apiGroup: rbac.authorization.k8s.io
+ kind: ClusterRole
+ name: privileged-role
+subjects:
+  - kind: ServiceAccount
+    name: ebs-csi-node-sa
+    namespace: kube-system
+
+# check
+#  kubectl describe  rolebinding privileged-rolebinding  -n kube-system 
+
+# create your privileged psp if don't have
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:
+    eks.amazonaws.com/component: pod-security-policy
+    kubernetes.io/cluster-service: "true"
+  name: privileged.test
+spec:
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - max: 65535
+    min: 0
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
